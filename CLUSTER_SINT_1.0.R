@@ -1,14 +1,13 @@
 
-setwd("C:/Users/Manuel Ruiz Cárdenas/Desktop")
 
 require("pheatmap")
 rm(list=ls())
 nombre<-"X.csv"
 
-# Etapa de introduccion de parametros
+# Parameters introduction stage
 
 
-# Parametros generales
+# General Parameters
 n<-1500
 m<-800
 noisefactorpat_1<-0.15
@@ -16,13 +15,13 @@ noisefactorpat_2<-0.15
 noisefactor<-1
 margingenes<-0
 marginpacientes<-0
-# Parametros del cluster 1
+# Cluster 1 parameters
 mu<-0
 pc1<-1:400
 ng1<-length(pc1)
 p<-400
 alpha<-0
-#Parametros del cluster 2
+#Cluster 2 parameters
 delta<-0
 pc2<-41:80
 ng2<-length(pc2)
@@ -32,29 +31,31 @@ beta<-0
 
 ############################################################################
 
-# Etapa de computo y creacion de los datasets
+# Computing and Building datasets stage
 
 
-# Reescalamiento de los valores de  ruido.
+# Reescaling of noise parameters.
 noisefactorpat_1<-noisefactorpat_1*6
 noisefactorpat_2<-noisefactorpat_2*6
 noisefactor<-noisefactor*6
 
-# Se crea primeramente una matriz de las dimensiones 
-# requeridas poblada por muestras de una distribucion normal 
-# de media 0 y varianza igual a noisefactor.
+
+# A matrix of dimensions is created first
+# required populated by samples of a normal distribution
+# of mean 0 and variance equal to noisefactor.
 
 noisematrix<-matrix(rnorm((m+2*marginpacientes)*(n+2*margingenes),mean=0,sd=noisefactor),m+2*marginpacientes,n+2*margingenes)
 
 
 #h_k:[0,2*pi]---->[0,1] k e {0,...,n1-1}
 
-# La funcion h_k actua como una funcion real del tipo 
-# ((1+cos(xK+M)/2)^(1/p) modulada por los parametros del 
-# cluster 1. h_k asigna valores 
-# altos a las primeras variables de los individuos 
-# pertenecientes al primer cluster y valores bajos o nulos a 
-# las ultimas variables. 
+
+# The function h_k acts as a real function of the type
+# ((1 + cos (xK + M) / 2) ^ (1 / p) modulated by the parameters of the
+# cluster 1. h_k assigns values
+# high to the first variables of the individuals
+# belonging to the first cluster and low or null values
+# the last variables.
 
 h_k<-function(s){
   alpha_rand<-rnorm(1,mean=alpha,sd=0.01)
@@ -68,11 +69,12 @@ h_k<-function(s){
 }
 #g_k:[0,2*pi]---->[0,1] k e {0,...,n2-1}
 
-# g_k es la version totalmente analoga a h_k que provee los 
-# patrones del segundo cluster. La modulacion es igual que 
-# para h_k. g_k asigna valores altos a las ultimas variables 
-# de los individuos del segundo cluster y valores bajos o 
-# nulos a las primeras variables.
+
+# g_k is the fully analogous version to h_k that provides the
+# patterns of the second cluster. The modulation is the same as
+# for h_k. g_k assigns high values to the last variables
+# of the individuals of the second cluster and low values or
+# null to the first variables.
 
 g_k<-function(s){
   beta_rand<-rnorm(1,mean=beta,sd=0.01)
@@ -87,14 +89,15 @@ g_k<-function(s){
   }
 }
 
-# matrixcdef es espacio de memoria dedicado a la construccion de la
-# matriz final de datos sinteticos. Se inicializa ahora como una matriz
-# nula de la talla convenida por pacientes y variables que contienen 
-# patrones deseados y con los parametros marginpacientes y margingenes, 
-# que son el numero respectivamente de individuos y variables que no 
-# presentaran ningun patron, a fin de poder presentar mas realismo. 
-# Seguidamente se suma noisematrix para a continuacion incluir  los 
-# patrones donde corresponda, haciendo uso de h_k  y g_k.
+
+# matrixcdef is memory space dedicated to the construction of the
+# final matrix of synthetic data. It is initialized now as an array
+# null of the size agreed by patients and variables that contain
+# desired patterns and with marginal and marginal parameters,
+# which are the number respectively of individuals and variables that do not
+# present no pattern, in order to present more realism.
+# Next we add noisematrix to then include the
+# patterns where appropriate, making use of h_k and g_k.
 
 matrixcdef<-matrix(0,m+2*marginpacientes,n+2*margingenes)+noisematrix
 
@@ -112,8 +115,8 @@ cluster1<-function(){
 }
 p1<-cluster1()
 
-# Los patrones son alterados usando matrices de ruido moduladas en este  
-# caso por noisefactorpat_1 y por noisefactorpat_2 en el caso del segundo 
+# Patterns are altered using modulated noise matrices in this
+# case by noisefactorpat_1 and by noisefactorpat_2 in the case of the second
 #cluster.
 
 noisematrixcluster1<-matrix(rnorm(ng1*n,mean=0,sd=noisefactorpat_1),ng1,n)
@@ -139,11 +142,12 @@ p2<-p2+noisematrixcluster2
 matrixcdef[(marginpacientes+pc2),((margingenes+1):(margingenes+n))]<-p2
 }
 
-# En el caso de que la lista de los individuos que se desean en el 
-# cluster 1 y en el 2 tenga interseccion no nula los individuos de dicha  
-# interseccion seran dotados de un patron correspondiente a la media de 
-# los patrones caracteristicos de cada cluster, simulando una 
-# interseccion real entre los dos subgrupos.
+
+# In the event that the list of individuals desired in the
+# cluster 1 and in 2 have non-zero intersection the individuals of said
+# intersection will be endowed with a pattern corresponding to the average of
+# the characteristic patterns of each cluster, simulating a
+# real intersection between the two subgroups.
 
 pci<-intersect(pc1,pc2)
 ngi<-length(pci)
@@ -158,14 +162,13 @@ if(ngi!=0){
   pi<-cim+noisematrixclusteri
   matrixcdef[(marginpacientes+pci),((margingenes+1):(margingenes+n))]<-pi
 }
-
-# finalmente se devuelve matrixf, la version forzada a ser data frame de 
-# matrixcdef (matriz de datos sinteticos)
+# matrixf is finally returned, the forced version to be data frame of
+# matrixcdef (synthetic data matrix)
 
 matrixf<-as.data.frame(matrixcdef)
-#Heatmap de los datos
+#Heatmap of the data
 pheatmap(matrixf,color=colorRampPalette(c("black","red","yellow"))(1000),cluster_cols = FALSE, cluster_rows = FALSE)
-#Heatmap de correlacion
+#Heatmap of the correlation
 pheatmap(as.matrix(dist(matrixf)),color=colorRampPalette(c("yellow","red","black"))(1000),cluster_cols = FALSE, cluster_rows = FALSE)
 
 print("Guardar?")
